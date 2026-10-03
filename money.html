@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bendahara Tracker</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      background: linear-gradient(135deg, #0f1419 0%, #1a1f2e 100%);
+      color: white;
+      min-height: 100vh;
+    }
+
+    .blur-bg {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .blur-circle {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+    }
+
+    .blur-circle-1 {
+      top: 5rem;
+      right: 25%;
+      width: 24rem;
+      height: 24rem;
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.2) 0%, transparent 70%);
+      opacity: 0.2;
+    }
+
+    .blur-circle-2 {
+      bottom: 0;
+      left: 25%;
+      width: 24rem;
+      height: 24rem;
+      background: radial-gradient(circle, rgba(79, 70, 229, 0.1) 0%, transparent 70%);
+      opacity: 0.1;
+    }
+
+    .container {
+      position: relative;
+      z-index: 10;
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 1rem;
+      padding-bottom: 2rem;
+    }
+
+    .header {
+      padding-top: 1.5rem;
+      padding-bottom: 2rem;
+    }
+
+    .header h1 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    .header p {
+      font-size: 0.875rem;
+      color: rgba(163, 163, 163, 0.7);
+    }
+
+    .tabs {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .tab-btn {
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+      background: transparent;
+      color: rgba(163, 163, 163, 0.7);
+      transition: all 0.2s;
+    }
+
+    .tab-btn.active {
+      color: white;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .dashboard {
+      display: none;
+    }
+
+    .dashboard.active {
+      display: block;
+    }
+
+    .space-y-4 {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .glass {
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 1.5rem;
+      border-radius: 1rem;
+    }
+
+    .glass-label {
+      font-size: 0.75rem;
+      letter-spacing: 0.1em;
+      color: rgba(163, 163, 163, 0.7);
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+    }
+
+    .glass-title {
+      font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+      font-size: 2.25rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    .glass-subtitle {
+      font-size: 0.875rem;
+      color: rgba(163, 163, 163, 0.6);
+    }
+
+    .btn-primary {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      background: rgba(99, 102, 241, 0.2);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      color: #c7d2fe;
+      font-size: 0.875rem;
+      font-weight: 500;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+
+    .btn-primary:hover {
+      background: rgba(99, 102, 241, 0.3);
+      border-color: rgba(99, 102, 241, 0.4);
+    }
+
+    .form-container {
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 1rem;
+      border-radius: 1rem;
+      display: none;
+    }
+
+    .form-container.show {
+      display: block;
+    }
+
+    .form-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+    }
+
+    .form-header h3 {
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      color: rgba(163, 163, 163, 0.7);
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+
+    .form-group {
+      margin-bottom: 0.75rem;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.75rem;
+      color: rgba(163, 163, 163, 0.7);
+      margin-bottom: 0.25rem;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: white;
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: rgba(99, 102, 241, 0.5);
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .form-input::placeholder {
+      color: rgba(163, 163, 163, 0.6);
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+    }
+
+    .trans-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .trans-item {
+      padding: 0.75rem 1rem;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 0.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+
+    .trans-item-left {
+      flex: 1;
+    }
+
+    .trans-item-category {
+      font-size: 0.875rem;
+      font-weight: 500;
+      text-transform: capitalize;
+    }
+
+    .trans-item-date {
+      font-size: 0.75rem;
+      color: rgba(163, 163, 163, 0.6);
+      margin-top: 0.25rem;
+    }
+
+    .trans-item-note {
+      font-size: 0.75rem;
+      color: rgba(163, 163, 163, 0.5);
+      margin-top: 0.25rem;
+    }
+
+    .trans-item-right {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      white-space: nowrap;
+    }
+
+    .trans-item-amount {
+      font-size: 0.875rem;
+      font-weight: 600;
+    }
+
+    .trans-item-amount.income {
+      color: #4ade80;
+    }
+
+    .trans-item-amount.expense {
+      color: #f87171;
+    }
+
+    .trans-item-actions {
+      display: flex;
+      gap: 0.25rem;
+    }
+
+    .trans-item-btn {
+      background: none;
+      border: none;
+      color: rgba(163, 163, 163, 0.6);
+      cursor: pointer;
+      padding: 0.25rem;
+      font-size: 1rem;
+    }
+
+    .trans-item-btn:hover {
+      color: white;
+    }
+
+    .trans-item-btn.delete:hover {
+      color: #f87171;
+    }
+
+    .allowance-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .allowance-item {
+      padding: 0.75rem 1rem;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 0.5rem;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.2s;
+      font-family: inherit;
+      color: white;
+    }
+
+    .allowance-item:hover {
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+
+    .allowance-item.checked {
+      background: rgba(34, 197, 94, 0.08);
+      border-color: rgba(34, 197, 94, 0.2);
+      opacity: 0.6;
+    }
+
+    .allowance-item.checked:hover {
+      opacity: 1;
+    }
+
+    .allowance-item-left {
+      text-align: left;
+    }
+
+    .allowance-item-amount {
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+
+    .allowance-item.checked .allowance-item-amount {
+      color: #4ade80;
+    }
+
+    .allowance-item-date {
+      font-size: 0.75rem;
+      color: rgba(163, 163, 163, 0.6);
+    }
+
+    .checkbox {
+      width: 1.25rem;
+      height: 1.25rem;
+      border-radius: 50%;
+      border: 2px solid rgba(163, 163, 163, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+
+    .checkbox.checked {
+      background: rgba(34, 197, 94, 0.3);
+      border-color: rgb(74, 222, 128);
+    }
+
+    .checkbox::after {
+      content: '✓';
+      color: rgb(74, 222, 128);
+      font-weight: bold;
+      font-size: 0.75rem;
+      display: none;
+    }
+
+    .checkbox.checked::after {
+      display: block;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 0.75rem;
+      font-size: 0.75rem;
+    }
+
+    .stat-item {
+      text-align: left;
+    }
+
+    .stat-label {
+      color: rgba(163, 163, 163, 0.6);
+      margin-bottom: 0.25rem;
+    }
+
+    .stat-value {
+      font-size: 1.125rem;
+      font-weight: 600;
+    }
+
+    .stat-value.amber {
+      color: #fbbf24;
+    }
+
+    .glass-lighter {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 1rem;
+      border-radius: 0.5rem;
+    }
+
+    .glass-lighter p {
+      font-size: 0.75rem;
+      color: rgba(163, 163, 163, 0.7);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 2rem 0;
+      color: rgba(163, 163, 163, 0.6);
+      font-size: 0.875rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="blur-bg">
+    <div class="blur-circle blur-circle-1"></div>
+    <div class="blur-circle blur-circle-2"></div>
+  </div>
+
+  <div class="container">
+    <div class="header">
+      <h1>Bendahara</h1>
+      <p>Tracking keuangan Christo</p>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="personal">Keuangan Pribadi</button>
+      <button class="tab-btn" data-tab="mamah">Allowance (Rp 50k/hari)</button>
+    </div>
+
+    <!-- Personal Dashboard -->
+    <div class="dashboard active" id="personal-dashboard">
+      <div class="space-y-4">
+        <div class="glass">
+          <div class="glass-label">Saldo</div>
+          <div class="glass-title" id="personal-balance">Rp 0</div>
+          <div class="glass-subtitle">Update terakhir hari ini</div>
+        </div>
+
+        <button class="btn-primary" id="add-trans-btn">+ Tambah Transaksi</button>
+
+        <div class="form-container" id="form-container">
+          <div class="form-header">
+            <h3 id="form-title">Transaksi Baru</h3>
+            <button class="close-btn" id="close-form-btn">×</button>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Jumlah</label>
+            <input type="number" class="form-input" id="form-amount" placeholder="0">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Tipe</label>
+              <select class="form-input" id="form-type">
+                <option value="income">Masuk</option>
+                <option value="expense">Keluar</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Tanggal</label>
+              <input type="date" class="form-input" id="form-date">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Kategori (opsional)</label>
+            <input type="text" class="form-input" id="form-category" placeholder="Kerja, bensin, makan...">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Catatan (opsional)</label>
+            <input type="text" class="form-input" id="form-note" placeholder="Catatan tambahan...">
+          </div>
+
+          <button class="btn-primary" id="save-trans-btn">Simpan</button>
+        </div>
+
+        <div class="trans-list" id="trans-list"></div>
+      </div>
+    </div>
+
+    <!-- Mamah Dashboard -->
+    <div class="dashboard" id="mamah-dashboard">
+      <div class="space-y-4">
+        <div class="glass">
+          <div class="glass-label">Total Terkumpul</div>
+          <div class="glass-title" id="mamah-total">Rp 0</div>
+          <div class="stats-grid">
+            <div class="stat-item">
+              <div class="stat-label">Sudah diterima</div>
+              <div class="stat-value" id="mamah-received">0</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-label">Menunggu</div>
+              <div class="stat-value amber" id="mamah-pending">0</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-label">Potensi</div>
+              <div class="stat-value" id="mamah-potential">Rp 0</div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <p style="font-size: 0.75rem; font-weight: 500; color: rgba(163, 163, 163, 0.6); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em;">Riwayat</p>
+          <div class="allowance-list" id="allowance-list"></div>
+        </div>
+
+        <div class="glass-lighter">
+          <p>Sistem otomatis membuat tagihan Rp 50.000 setiap harinya. Klik item untuk menandai sudah diterima.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // State Default (Jika aplikasi baru pertama kali dibuka)
+    const defaultState = {
+      editingId: null,
+      personalTransactions: [],
+      mamahAllowance: []
+    };
+
+    // Load data dari LocalStorage
+    let state = JSON.parse(localStorage.getItem('bendaharaState')) || defaultState;
+
+    // Fungsi untuk simpan data ke LocalStorage
+    function saveState() {
+      localStorage.setItem('bendaharaState', JSON.stringify(state));
+    }
+
+    // Fungsi bantu untuk dapatkan tanggal lokal hari ini (format YYYY-MM-DD)
+    function getLocalDateString(dateObj = new Date()) {
+      return dateObj.getFullYear() + '-' + 
+             String(dateObj.getMonth() + 1).padStart(2, '0') + '-' + 
+             String(dateObj.getDate()).padStart(2, '0');
+    }
+
+    // AUTOGENERATE ALLOWANCE: Cek dan buat otomatis allowance tiap harinya
+    function generateDailyAllowance() {
+      const todayStr = getLocalDateString();
+      const todayDate = new Date(todayStr + 'T00:00:00'); // Set ke jam 00 lokal
+
+      if (state.mamahAllowance.length === 0) {
+        // Kalau kosong sama sekali, buatkan untuk hari ini
+        state.mamahAllowance.push({ id: 1, date: todayStr, amount: 50000, received: false });
+        saveState();
+        return;
+      }
+
+      // Ambil tanggal terakhir dari list (asumsi list terurut dari terlama ke terbaru)
+      const lastEntry = state.mamahAllowance[state.mamahAllowance.length - 1];
+      const lastDate = new Date(lastEntry.date + 'T00:00:00');
+
+      let hasNewEntry = false;
+      let nextDate = new Date(lastDate);
+      nextDate.setDate(nextDate.getDate() + 1); // Cek hari berikutnya
+
+      // Loop nambahin tanggal sampai tanggal hari ini
+      while (nextDate <= todayDate) {
+        const newDateStr = getLocalDateString(nextDate);
+        const newId = state.mamahAllowance.length > 0 
+          ? Math.max(...state.mamahAllowance.map(m => m.id)) + 1 
+          : 1;
+
+        state.mamahAllowance.push({
+          id: newId,
+          date: newDateStr,
+          amount: 50000,
+          received: false
+        });
+
+        nextDate.setDate(nextDate.getDate() + 1);
+        hasNewEntry = true;
+      }
+
+      if (hasNewEntry) {
+        saveState();
+      }
+    }
+
+    // Keamanan ekstra untuk mencegah input tag HTML yang merusak UI (XSS)
+    function escapeHTML(str) {
+      if (!str) return '';
+      return str.replace(/[&<>'"]/g, 
+        tag => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            "'": '&#39;',
+            '"': '&quot;'
+          }[tag] || tag)
+      );
+    }
+
+    // Formatters
+    function formatRupiah(num) {
+      return new Intl.NumberFormat('id-ID', { 
+        style: 'currency', 
+        currency: 'IDR', 
+        minimumFractionDigits: 0 
+      }).format(num);
+    }
+
+    function formatDate(dateStr) {
+      return new Date(dateStr + 'T00:00:00').toLocaleDateString('id-ID', { 
+        month: 'short', 
+        day: 'numeric' 
+      });
+    }
+
+    // Renderers
+    function renderPersonalBalance() {
+      const balance = state.personalTransactions.reduce((sum, t) => 
+        sum + (t.type === 'income' ? t.amount : -t.amount), 0
+      );
+      document.getElementById('personal-balance').textContent = formatRupiah(balance);
+    }
+
+    function renderTransactionList() {
+      const list = document.getElementById('trans-list');
+      if (state.personalTransactions.length === 0) {
+        list.innerHTML = '<div class="empty-state">Belum ada transaksi</div>';
+        return;
+      }
+
+      list.innerHTML = state.personalTransactions.slice().reverse().map(t => `
+        <div class="trans-item">
+          <div class="trans-item-left">
+            <div class="trans-item-category">${escapeHTML(t.category) || 'Transaksi'}</div>
+            <div class="trans-item-date">${formatDate(t.date)}</div>
+            ${t.note ? `<div class="trans-item-note">${escapeHTML(t.note)}</div>` : ''}
+          </div>
+          <div class="trans-item-right">
+            <div class="trans-item-amount ${t.type}">${t.type === 'income' ? '+' : '-'}${formatRupiah(t.amount)}</div>
+            <div class="trans-item-actions">
+              <button class="trans-item-btn" onclick="editTransaction(${t.id})">✎</button>
+              <button class="trans-item-btn delete" onclick="deleteTransaction(${t.id})">✕</button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderMamahStats() {
+      const received = state.mamahAllowance.filter(m => m.received).length;
+      const pending = state.mamahAllowance.filter(m => !m.received).length;
+      
+      document.getElementById('mamah-total').textContent = formatRupiah(received * 50000);
+      document.getElementById('mamah-received').textContent = received;
+      document.getElementById('mamah-pending').textContent = pending;
+      document.getElementById('mamah-potential').textContent = formatRupiah(pending * 50000);
+    }
+
+    function renderAllowanceList() {
+      const list = document.getElementById('allowance-list');
+      if (state.mamahAllowance.length === 0) {
+        list.innerHTML = '<div class="empty-state">Belum ada data</div>';
+        return;
+      }
+
+      list.innerHTML = state.mamahAllowance.slice().reverse().map(item => `
+        <button class="allowance-item ${item.received ? 'checked' : ''}" onclick="toggleAllowance(${item.id})">
+          <div class="allowance-item-left">
+            <div class="allowance-item-amount">Rp 50.000</div>
+            <div class="allowance-item-date">${formatDate(item.date)}</div>
+          </div>
+          <div class="checkbox ${item.received ? 'checked' : ''}"></div>
+        </button>
+      `).join('');
+    }
+
+    // Event Handlers
+    document.getElementById('add-trans-btn').addEventListener('click', () => {
+      state.editingId = null;
+      document.getElementById('form-title').textContent = 'Transaksi Baru';
+      document.getElementById('form-amount').value = '';
+      document.getElementById('form-type').value = 'income';
+      document.getElementById('form-category').value = '';
+      document.getElementById('form-note').value = '';
+      document.getElementById('form-date').value = getLocalDateString(); 
+      document.getElementById('save-trans-btn').textContent = 'Simpan';
+      document.getElementById('form-container').classList.add('show');
+    });
+
+    document.getElementById('close-form-btn').addEventListener('click', () => {
+      state.editingId = null; 
+      document.getElementById('form-container').classList.remove('show');
+    });
+
+    document.getElementById('save-trans-btn').addEventListener('click', () => {
+      const amount = parseInt(document.getElementById('form-amount').value);
+      const type = document.getElementById('form-type').value;
+      const date = document.getElementById('form-date').value;
+      const category = document.getElementById('form-category').value;
+      const note = document.getElementById('form-note').value;
+
+      if (isNaN(amount) || !date) return; 
+
+      if (state.editingId) {
+        state.personalTransactions = state.personalTransactions.map(t =>
+          t.id === state.editingId
+            ? { ...t, amount, type, category, note, date }
+            : t
+        );
+      } else {
+        const newId = state.personalTransactions.length > 0 
+          ? Math.max(...state.personalTransactions.map(t => t.id)) + 1 
+          : 1;
+        state.personalTransactions.push({ id: newId, amount, type, category, note, date });
+      }
+
+      state.editingId = null; 
+      document.getElementById('form-container').classList.remove('show');
+      
+      saveState(); // Simpan perubahan ke device
+      renderPersonalBalance();
+      renderTransactionList();
+    });
+
+    function editTransaction(id) {
+      const trans = state.personalTransactions.find(t => t.id === id);
+      if (!trans) return;
+
+      state.editingId = id;
+      document.getElementById('form-title').textContent = 'Edit Transaksi';
+      document.getElementById('form-amount').value = trans.amount;
+      document.getElementById('form-type').value = trans.type;
+      document.getElementById('form-date').value = trans.date;
+      document.getElementById('form-category').value = trans.category;
+      document.getElementById('form-note').value = trans.note;
+      document.getElementById('save-trans-btn').textContent = 'Simpan Perubahan';
+      document.getElementById('form-container').classList.add('show');
+    }
+
+    function deleteTransaction(id) {
+      if(confirm('Yakin ingin menghapus transaksi ini?')) { 
+        state.personalTransactions = state.personalTransactions.filter(t => t.id !== id);
+        saveState(); // Simpan perubahan ke device
+        renderPersonalBalance();
+        renderTransactionList();
+      }
+    }
+
+    function toggleAllowance(id) {
+      state.mamahAllowance = state.mamahAllowance.map(m =>
+        m.id === id ? { ...m, received: !m.received } : m
+      );
+      saveState(); // Simpan perubahan ke device
+      renderMamahStats();
+      renderAllowanceList();
+    }
+
+    // Tab switching
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const tabName = e.target.dataset.tab;
+        
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.dashboard').forEach(d => d.classList.remove('active'));
+        
+        e.target.classList.add('active');
+        document.getElementById(`${tabName}-dashboard`).classList.add('active');
+      });
+    });
+
+    // Inisialisasi awal saat web dibuka
+    generateDailyAllowance(); // Generate tagihan allowance otomatis
+    renderPersonalBalance();
+    renderTransactionList();
+    renderMamahStats();
+    renderAllowanceList();
+  </script>
+</body>
+</html>
